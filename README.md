@@ -3,16 +3,16 @@
   Object-Oriented Programming course project
   <br>
 #Functionalities
-- Determinization of NFA
-- Minimization of NFA
-- Totalization of NFA
-- Check if a word is recognized by NFA
-- Check if the language of the NFA is empty
-- Union of two NFAs
-- Concatenation of two NFAs
-- Klene star of an NFA
-- Intersection of two NFAs
-- Complementation of an NFA
-- Difference of two NFAs ( L\L1 )
-- Regular expression to NFA conversion
-- NFA to regular expression conversion
+- Determinization of NFA <br>
+- Minimization of NFA <br>
+- Totalization of NFA <br>
+- Check if a word is recognized by NFA <br>
+- Check if the language of the NFA is empty <br>
+- Union of two NFAs <br>
+- Concatenation of two NFAs <br>
+- Klene star of an NFA <br>
+- Intersection of two NFAs <br>
+- Complementation of an NFA <br>
+- Difference of two NFAs ( L\L1 ) <br>
+- Regular expression to NFA conversion <br>
+- NFA to regular expression conversion <br>
