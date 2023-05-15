@@ -2,7 +2,7 @@
 <br>
   Object-Oriented Programming course project
   <br>
-#Functionalities
+#Functionalities# <br>
 - Determinization of NFA <br>
 - Minimization of NFA <br>
 - Totalization of NFA <br>
