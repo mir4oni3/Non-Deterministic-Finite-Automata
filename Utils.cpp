@@ -17,7 +17,7 @@ MyString toString(const MyStack<char> stack) {
 	int i = 0;
 	while (!st.isEmpty()) {
 		str[i++] = ' ';
-		str[i++] =st.pop();
+		str[i++] = st.pop();
 	}
 	MyString result(str);
 	delete[] str;
@@ -28,7 +28,6 @@ MyString toString(const MyQueue<char> queue) {
 	MyQueue<char> q = queue;
 	char* str = new char[2 * q.getCount()];
 	int i = 0;
-	int i = 0;
 	while (!q.isEmpty()) {
 		str[i++] = ' ';
 		str[i++] = q.dequeue();
@@ -36,4 +35,8 @@ MyString toString(const MyQueue<char> queue) {
 	MyString result(str);
 	delete[] str;
 	return result;
+}
+
+bool isValidRegexSymbol(char ch) {
+	return (isInAlphabet(ch) || ch == '(' || ch == ')' || ch == '*' || ch == '+' || ch == '.');
 }

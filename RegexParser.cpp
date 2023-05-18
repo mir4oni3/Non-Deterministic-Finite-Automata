@@ -2,12 +2,17 @@
 #include <cstring>
 #include "Constants.h"
 #include "Utils.h"
-#include "MyQueue.h"
-#include "MyStack.h"
+#include "MyQueue.hpp"
+#include "MyStack.hpp"
 
-NFA RegexParser::NFAfromRegex(const MyString& regex) {//correct form check ?
+NFA RegexParser::NFAfromRegex(const MyString& regex) {
+	for (size_t i = 0; i < regex.length(); i++) {
+		if (!isValidRegexSymbol(regex[i])) {
+			throw std::invalid_argument("Error: invalid regex");
+		}
+	}
 	MyString regexCopy(regex);
-	regexToReversePolishNotation(regexCopy);
+	regexToRPN(regexCopy);
 	return RPNtoNFA(regexCopy);
 }
 
@@ -24,7 +29,7 @@ NFA RegexParser::RPNtoNFA(const MyString& RPNregex) {
 
 		else if (currentSymbol == '*') {
 			if (stack.getCount() < 1) {
-				throw std::logic_error("Error: invalid regex");
+				throw std::invalid_argument("Error: invalid regex");
 			}
 			NFA current = stack.pop();
 			StarRef(current);
@@ -33,7 +38,7 @@ NFA RegexParser::RPNtoNFA(const MyString& RPNregex) {
 
 		else if (currentSymbol == '.' || currentSymbol == '+') {
 			if (stack.getCount() < 2) {
-				throw std::logic_error("Error: invalid regex");
+				throw std::invalid_argument("Error: invalid regex");
 			}
 			NFA first = stack.pop();
 			NFA second = stack.pop();
@@ -47,12 +52,13 @@ NFA RegexParser::RPNtoNFA(const MyString& RPNregex) {
 		return stack.pop();
 	}
 	else {
-		throw std::logic_error("Error: invalid regex");
+		throw std::invalid_argument("Error: invalid regex");
 	}
 }
 
+//RPN -> Reverse Polish Notation
 // shunting yard algorithm
-void RegexParser::regexToReversePolishNotation(MyString& regex) {
+void RegexParser::regexToRPN(MyString& regex) {
 	MyStack<char> stack;
 	MyQueue<char> queue;
 
@@ -110,10 +116,10 @@ void RegexParser::regexToReversePolishNotation(MyString& regex) {
 NFA RegexParser::NFAfromLetter(const char letter) {
 	NFA result;
 	if (letter == EPSILON) {
-		result.addState(State(true,true));
+		result.addState(State(true, true));
 	}
 	else {
-		result.addState(State(true,false));
+		result.addState(State(true, false));
 		result.addState(State(false, true));
 		result.addTransition(Transition(result[0], result[1], letter));
 	}

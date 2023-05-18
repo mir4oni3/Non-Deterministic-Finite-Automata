@@ -6,13 +6,14 @@
 class NFA {
 	State* states = nullptr;
 	size_t stateCount = 0;
-	Transition* transitions = nullptr; 
+	Transition* transitions = nullptr;
 	size_t transitionCount = 0;
 
 	MyString regex;
 	bool isDFA = false;
 
 	void copyFrom(const NFA& other);
+	void moveFrom(NFA&& other);
 	void free();
 public:
 
@@ -37,9 +38,6 @@ public:
 	State& operator[](const size_t index) const; // returns state at index
 };
 
-NFA Union(const NFA& lhs, const NFA& rhs);
-void UnionRef(NFA& lhs, const NFA& rhs);
-NFA Concat(const NFA& lhs, const NFA& rhs);
-void ConcatRef(NFA& lhs, const NFA& rhs);
-NFA Star(const NFA& nfa);
-void StarRef(NFA& nfa);
+void Union(NFA& lhs, const NFA& rhs); // transforms lhs to lhs U rhs
+void Concat(NFA& lhs, const NFA& rhs); // transforms lhs to rhs.lhs
+void Star(NFA& nfa); // transforms nfa to (nfa)*

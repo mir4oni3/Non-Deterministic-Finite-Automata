@@ -1,4 +1,5 @@
 #include "MyString.h"
+#pragma warning (disable : 4996)
 
 MyString::MyString(size_t capacity) {
 	_length = capacity - 1;
@@ -48,7 +49,7 @@ MyString& MyString::operator=(const MyString& other) {
 	return *this;
 }
 
-MyString::MyString(MyString&& other) noexcept : _data(other._data),_length(other._length){
+MyString::MyString(MyString&& other) noexcept : _data(other._data), _length(other._length) {
 	other._data = nullptr;
 }
 

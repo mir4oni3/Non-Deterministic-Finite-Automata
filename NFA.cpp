@@ -20,6 +20,19 @@ void NFA::copyFrom(const NFA& other) {
 	}
 }
 
+void NFA::moveFrom(NFA&& other) {
+	states = other.states;
+	other.states = nullptr;
+	stateCount = other.stateCount;
+
+	transitions = other.transitions;
+	other.transitions = nullptr;
+	transitionCount = other.transitionCount;
+
+	this->regex = std::move(other.regex);
+	this->isDFA = other.isDFA;
+}
+
 void NFA::free() {
 	delete[] states;
 	delete[] transitions;
@@ -45,25 +58,14 @@ NFA& NFA::operator=(const NFA& other) {
 	return *this;
 }
 
-NFA::NFA(NFA&& other) noexcept : regex(std::move(other.regex)), states(other.states), transitions(other.transitions), 
-								 isDFA(other.isDFA), stateCount(other.stateCount), transitionCount(other.transitionCount){
-	other.states = nullptr;
-	other.transitions = nullptr;
+NFA::NFA(NFA&& other) noexcept {
+	moveFrom(std::move(other));
 }
 
 NFA& NFA::operator=(NFA&& other) noexcept {
 	if (this != &other) {
 		free();
-
-		regex = std::move(other.regex);
-		states = other.states;
-		transitions = other.transitions;
-		isDFA = other.isDFA;
-		stateCount = other.stateCount;
-		transitionCount = other.transitionCount;
-
-		other.states = nullptr;
-		other.transitions = nullptr;
+		moveFrom(std::move(other));
 	}
 	return *this;
 }
@@ -73,4 +75,44 @@ State& NFA::operator[](const size_t index) const {
 		throw std::out_of_range("invalid index operator[]");
 	}
 	return states[index];
+}
+
+void NFA::determinate() {
+
+}
+
+void NFA::minimise() {
+
+}
+
+void NFA::makeTotal() {
+
+}
+
+void NFA::addState(const State& other) {
+
+}
+
+void NFA::addTransition(const Transition& other) {
+
+}
+
+bool NFA::isEmptyLanguage() const {
+	return true;
+}
+
+bool NFA::accept(const MyString& word) const {
+	return true;
+}
+
+void Union(NFA& lhs, const NFA& rhs) {
+
+}
+
+void Concat(NFA& lhs, const NFA& rhs) {
+
+}
+
+void Star(NFA& nfa) {
+
 }

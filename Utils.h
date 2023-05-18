@@ -1,6 +1,6 @@
 #pragma once
-#include "MyStack.h"
-#include "MyQueue.h"
+#include "MyStack.hpp"
+#include "MyQueue.hpp"
 
 bool isInAlphabet(char ch);
 MyString toString(const MyStack<char> st);
