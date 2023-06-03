@@ -4,6 +4,7 @@
 #include "Utils.h"
 #include "MyQueue.hpp"
 #include "MyStack.hpp"
+#include "MyVector.hpp"
 
 NFA RegexParser::NFAfromRegex(const MyString& regex) {
 	for (size_t i = 0; i < regex.length(); i++) {
@@ -13,17 +14,19 @@ NFA RegexParser::NFAfromRegex(const MyString& regex) {
 	}
 	MyString regexCopy(regex);
 	regexToRPN(regexCopy);
-	return RPNtoNFA(regexCopy);
+	NFA result = std::move(RPNtoNFA(regexCopy));
+	result.regex = regex;
+	return result;
 }
 
 //RPN evaluation algorithm
 NFA RegexParser::RPNtoNFA(const MyString& RPNregex) {
 	MyStack<NFA> stack;
 
-	for (size_t i = 0; i < RPNregex.length(); i += 2) {
+	for (size_t i = 1; i < RPNregex.length(); i += 2) {
 		char currentSymbol = RPNregex[i];
 
-		if (isInAlphabet(currentSymbol)) {
+		if (isInAlphabet(currentSymbol) || currentSymbol == EPSILON) {
 			stack.push(RegexParser::NFAfromLetter(currentSymbol));
 		}
 
@@ -31,8 +34,9 @@ NFA RegexParser::RPNtoNFA(const MyString& RPNregex) {
 			if (stack.getCount() < 1) {
 				throw std::invalid_argument("Error: invalid regex");
 			}
-			NFA current = stack.pop();
-			StarRef(current);
+			NFA current = stack.peek();
+			stack.pop();
+			Star(current);
 			stack.push(current);
 		}
 
@@ -40,16 +44,17 @@ NFA RegexParser::RPNtoNFA(const MyString& RPNregex) {
 			if (stack.getCount() < 2) {
 				throw std::invalid_argument("Error: invalid regex");
 			}
-			NFA first = stack.pop();
-			NFA second = stack.pop();
-			(currentSymbol == '.') ? ConcatRef(second, first) : UnionRef(second, first);
+			NFA first = stack.peek();
+			stack.pop();
+			NFA second = stack.peek();
+			stack.pop();
+			(currentSymbol == '.') ? Concat(second, first) : Union(second, first);
 			stack.push(second);
 		}
-
 	}
 
 	if (stack.getCount() == 1) {
-		return stack.pop();
+		return stack.peek();
 	}
 	else {
 		throw std::invalid_argument("Error: invalid regex");
@@ -71,11 +76,14 @@ void RegexParser::regexToRPN(MyString& regex) {
 
 		else if (currentElement == ')') {
 			char currentStackElement = '\0';
-			while (currentStackElement != '(') {
-				currentStackElement = stack.pop();
+			while (true) {
+				currentStackElement = stack.peek();
+				stack.pop();
+				if (currentStackElement == '(') {
+					break;
+				}
 				queue.enqueue(currentStackElement);
 			}
-			stack.pop();
 		}
 
 		else if (isInAlphabet(currentElement) || currentElement == EPSILON) {
@@ -87,27 +95,36 @@ void RegexParser::regexToRPN(MyString& regex) {
 		}
 
 		else if (currentElement == '.') {
+			if (stack.isEmpty()) {
+				stack.push(currentElement);
+				continue;
+			}
 			char topOfStack = stack.peek();
 			if (topOfStack == '*') {
 				stack.pop();
 				queue.enqueue(topOfStack);
-				stack.push(currentElement);
 			}
+			stack.push(currentElement);
 		}
 
 		else if (currentElement == '+') {
+			if (stack.isEmpty()) {
+				stack.push(currentElement);
+				continue;
+			}
 			char topOfStack = stack.peek();
 			if (topOfStack == '*' || topOfStack == '.') {
 				stack.pop();
 				queue.enqueue(topOfStack);
-				stack.push(currentElement);
 			}
+			stack.push(currentElement);
 		}
 
 	}
 
 	while (!stack.isEmpty()) {
-		queue.enqueue(stack.pop());
+		queue.enqueue(stack.peek());
+		stack.pop();
 	}
 
 	regex = std::move(toString(queue));
@@ -116,12 +133,66 @@ void RegexParser::regexToRPN(MyString& regex) {
 NFA RegexParser::NFAfromLetter(const char letter) {
 	NFA result;
 	if (letter == EPSILON) {
-		result.addState(State(true, true));
+		result.addState(State(true, true, 0));
 	}
 	else {
-		result.addState(State(true, false));
-		result.addState(State(false, true));
+		result.addState(State(true, false, 0));
+		result.addState(State(false, true, 1));
 		result.addTransition(Transition(result[0], result[1], letter));
 	}
+
+	result.regex = "E";
+	result.regex[0] = letter;
 	return result;
 }
+
+ MyString RegexParser::RegexFromNFA(const NFA& nfa) {
+	 MyVector<size_t> initialIndices;
+	 MyVector<size_t> finalIndices;
+	 for (size_t i = 0; i < nfa.stateCount; i++) {
+		 if (nfa.states[i].isInitial()) {
+			 initialIndices.push_back(i);
+		 }
+		 if (nfa.states[i].isFinal()) {
+			 finalIndices.push_back(i);
+		 }
+	 }
+
+	 MyString result;
+	 for (size_t i = 0; i < initialIndices.getSize(); i++) {
+		 for (size_t j = 0; j < finalIndices.getSize(); j++) {
+			 result += calcReg(initialIndices[i], finalIndices[j], nfa.stateCount, nfa) + "+";
+		 }
+	 }
+	 return result;
+}
+
+ MyString RegexParser::calcReg(size_t i, size_t j, size_t k, const NFA& nfa) {
+	 MyString result;
+	 if (k > 0) {
+		 //using kleene's first theorem
+		 result = calcReg(i, j, k - 1, nfa) +"+(" +
+				  calcReg(i, k - 1, k - 1, nfa) + ").(" + 
+				  calcReg(k - 1, k - 1, k - 1, nfa) + ")*.(" +
+				  calcReg(k - 1, j, k - 1, nfa) + ")";
+	 }
+	 //recursion base
+	 if (k == 0) {
+		 for (size_t t = 0; t < nfa.transitionCount; t++) {
+			 if (nfa.transitions[t].getInitialState().getName() == i && nfa.transitions[t].getResultState().getName() == j) {
+				 result += nfa.transitions[t].getTransitionValue() + "+";
+			 }
+		 }
+		 if (i == j) {
+			 MyString EpsilonString = "E";
+			 EpsilonString[0] = EPSILON;
+			 result += EpsilonString;
+		 }
+		 else {
+			 if (result.length() > 0) {
+				 result[result.length() - 1] = '\0';
+			}
+		 }
+	}
+	 return result;
+ }

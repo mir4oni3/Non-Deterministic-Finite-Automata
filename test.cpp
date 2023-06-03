@@ -1,10 +1,8 @@
 #include <iostream>
-//#include "MyQueue1.hpp"
+#include "RegexParser.h"
 
 int main() {
-	/*MyQueue<int> q;
-	q.enqueue(3);
-	q.enqueue(4);
-	std::cout << q.dequeue();
-	std::cout << q.dequeue();*/
+	MyString str = "a.a.(a+b)*.b";
+	NFA nfa(str);
+	std::cout << nfa.accept("ababbbabbab");
 }

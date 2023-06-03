@@ -22,7 +22,7 @@ public:
 
 	void push(const T& element);
 	void push(T&& element);
-	T pop();
+	void pop();
 	const T& peek() const;
 
 	MyStack();
@@ -108,11 +108,11 @@ void MyStack<T>::push(T&& element) {
 }
 
 template <class T>
-T MyStack<T>::pop() {
+void MyStack<T>::pop() {
 	if (isEmpty()) {
 		throw std::logic_error("Cannot pop from empty stack!");
 	}
-	return elements[--count];
+	--count;
 }
 
 template <class T>

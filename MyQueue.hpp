@@ -28,7 +28,7 @@ public:
 
 	void enqueue(const T& obj);
 	void enqueue(T&& obj);
-	T dequeue();
+	void dequeue();
 	const T& peek() const;
 
 	bool isEmpty() const;
@@ -85,12 +85,11 @@ const T& MyQueue<T>::peek() const {
 }
 
 template <class T>
-T MyQueue<T>::dequeue() {
+void MyQueue<T>::dequeue() {
 	if (isEmpty())
 		throw std::logic_error("Empty queue!");
 	(++get) %= capacity;
 	size--;
-	return (get == 0) ? data[capacity - 1] : data[get - 1];
 }
 
 template <class T>

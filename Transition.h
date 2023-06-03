@@ -9,6 +9,12 @@ public:
 	const State& getInitialState();
 	const State& getResultState();
 	char getTransitionValue();
-	Transition();
+
+	void setInitialStateName(unsigned name);
+	void setResultStateName(unsigned name);
+	void setTransitionValue(char value);
+
+	Transition() = default;
 	Transition(const State& initial, const State& result, const char letter);
+	void print() const;
 };
