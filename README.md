@@ -14,3 +14,5 @@
 - Difference of two NFAs ( L\L1 ) <br>
 - Regular expression to NFA conversion <br>
 - NFA to regular expression conversion <br>
+- Serialization and deserialization to file <br>
+- Console interface <br>
