@@ -109,20 +109,65 @@ State& NFA::operator[](const size_t index) const {
 }
 
 void NFA::determinate() {
+	if (isDFA) {
+		return;
+	}
 
+	Utils::makeSingleInitialAndFinal(*this);//state[stateCount - 1] is final and state[stateCount - 2] is initial
+	MyVector<MyVector<MyVector<size_t>>> table; // table[i][0] is the new state, and table[i][j] is the state you go to from table[i][0] with the j-th letter of the alphabet
+	Utils::fillTable(table, *this);
+	NFA dfa;
+	dfa.addState(State(true, false, 0)); // the first state is initial
+	for (size_t i = 0; i < table.getSize() - 1; i++) {
+		dfa.addState(); // add the rest of the states from first column of table
+	}
+
+	//add the transitions (from table)
+	for (size_t i = 0; i < table.getSize(); i++) {
+		for (size_t j = 1; j < sizeof(alphabet) + 1; j++) {
+			dfa.addTransition(Transition(dfa.states[i], dfa.states[Utils::findIndexInTable(i, j, table)], alphabet[j - 1]));
+		}
+	}
+
+	//all new states(new states are vectors), containing final state from the nfa, are final
+	for (size_t i = 0; i < stateCount; i++) {
+		if (!states[i].isFinal()) {
+			continue;
+		}
+		for (size_t j = 0; j < table.getSize(); j++) {
+			if (table[j][0].containsAfter(i, 0)) {
+				dfa.states[j] = State(dfa.states[j].isInitial(), true, j);
+			}
+		}
+	}
+	dfa.isDFA = true;
+	dfa.regex = this->regex;
+	*this = std::move(dfa);
 }
 
+// determinate, reverse, determinate, reverse, determinate in this order always gives the minimized automata 
+//(Brzozowski theorem)
 void NFA::minimise() {
-
+	MyString regex = this->regex;
+	this->determinate();
+	Utils::reverseNFA(*this);
+	this->determinate();
+	Utils::reverseNFA(*this);
+	this->determinate();
+	this->regex = regex;
 }
 
 void NFA::makeTotal() {
+	if (isDFA) {
+		return;
+	}
+
 	addState(); // errorState
 	size_t errorStateName = states[stateCount - 1].getName();
 
 	for (size_t i = 0; i < stateCount; i++) {
 		for (size_t j = 0; j < sizeof(alphabet); j++) {
-			if (!transitionExists(states[i].getName(), alphabet[j], *this)) {
+			if (!Utils::transitionExists(states[i].getName(), alphabet[j], *this)) {
 				addTransition(Transition(states[i], states[stateCount - 1], alphabet[j])); // add transition to errorState
 			}
 		}
@@ -139,6 +184,7 @@ void NFA::addState(const State& other) {
 		states[stateCount].setName(states[stateCount - 1].getName() + 1);
 	}
 	stateCount++;
+	isDFA = false;
 }
 
 void NFA::addState() {
@@ -153,6 +199,7 @@ void NFA::addState() {
 		states[stateCount] = State(false, false, states[stateCount - 1].getName() + 1);
 	}
 	stateCount++;
+	isDFA = false;
 }
 
 void NFA::addTransition(const Transition& other) {
@@ -161,6 +208,9 @@ void NFA::addTransition(const Transition& other) {
 	}
 	transitions[transitionCount] = other;
 	transitionCount++;
+
+	isDFA = false;
+	this->regex = RegexParser::RegexFromNFA(*this);
 }
 
 void NFA::print() const {
@@ -177,6 +227,39 @@ void NFA::print() const {
 }
 
 bool NFA::isEmptyLanguage() const {
+	//fill visitedStates with initialStates
+	MyVector<size_t> visitedStates;
+	for (size_t i = 0; i < stateCount; i++) {
+		if (states[i].isInitial()) {
+			visitedStates.push_back(i);
+		}
+	}
+
+	//for every state, add all states reachable from it (visitedStates.getSize() will increase with time)
+	//after this loop, visitedStates will be filled with all reachable states
+	for (size_t i = 0; i < visitedStates.getSize(); i++) {
+		for (size_t j = 0; j < transitionCount; j++) {
+			if (Utils::indexByName(transitions[j].getInitialState().getName(), *this) == visitedStates[i]) {
+				if (!Utils::isInAlphabet(transitions[j].getTransitionValue())) { //we want to only check for the given alphabet(inside Constants.h)
+					continue;
+				}
+				size_t toPush = Utils::indexByName(transitions[j].getResultState().getName(),*this);
+				if (states[toPush].isFinal()) { //check if a final state is reached to avoid further calculations
+					return false;
+				}
+				if (!visitedStates.containsAfter(toPush, 0)) {
+					visitedStates.push_back(toPush);
+				}
+			}
+		}
+	}
+
+	//if no reachable states are final, return true
+	for (size_t i = 0; i < visitedStates.getSize(); i++) {
+		if (states[visitedStates[i]].isFinal()) {
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -190,7 +273,7 @@ bool NFA::accept(const MyString& word) const {
 			indices.push_back(i);
 		}
 	}
-	addEpsilonTransitionStates(indices, *this);
+	Utils::addEpsilonTransitionStates(indices, *this);
 	//indices is now filled with all starting states(and those that are reachable from the starting states with epsilon transitions)
 
 	//performs epsilon transition for every letter in the word and keeps the current states in indices after each step
@@ -198,7 +281,7 @@ bool NFA::accept(const MyString& word) const {
 		if (indices.getSize() == 0) {
 			return false;
 		}
-		deltaTransition(indices, word[i], *this);
+		Utils::deltaTransition(indices, word[i], *this);
 	}
 
 	//if after reading the whole word, there is a final state in indices, that means the nfa accepts the word
@@ -211,7 +294,8 @@ bool NFA::accept(const MyString& word) const {
 }
 
 void Union(NFA& lhs, const NFA& rhs) { 
-	addElementsFrom(lhs, rhs);
+	Utils::addElementsFrom(lhs, rhs);
+	lhs.isDFA = false;
 }
 
 void Concat(NFA& lhs, const NFA& rhs) {
@@ -234,7 +318,7 @@ void Concat(NFA& lhs, const NFA& rhs) {
 		}
 	}
 
-	addElementsFrom(lhs, rhs);
+	Utils::addElementsFrom(lhs, rhs);
 
 	//connect intermediate state to all initial states from rhs with E-transitions(rhs states start with intermediateStateIndex + 1)
 	for (size_t i = intermediateStateIndex + 1; i < lhs.stateCount; i++) {
@@ -243,6 +327,7 @@ void Concat(NFA& lhs, const NFA& rhs) {
 			lhs.states[i] = State(false, lhs.states[i].isFinal(), lhs.states[i].getName()); //make non-initial
 		}
 	}
+	lhs.isDFA = false;
 }
 
 void Star(NFA& nfa) {
@@ -259,4 +344,5 @@ void Star(NFA& nfa) {
 			}
 		}
 	}
+	nfa.isDFA = false;
 }

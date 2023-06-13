@@ -52,13 +52,7 @@ public:
 	friend void Concat(NFA& lhs, const NFA& rhs);
 	friend void Star(NFA& nfa);
 
-	friend void addElementsFrom(NFA& lhs, const NFA& rhs);
-	friend bool transitionExists(unsigned state, char ch, const NFA& nfa);
-
-	friend void deltaTransition(MyVector<size_t>& indices, char ch, const NFA& nfa);
-	friend size_t indexByName(size_t name, const NFA& nfa);
-	friend void addEpsilonTransitionStates(MyVector<size_t>& indices, const NFA& nfa, size_t oldIndicesSize);
-
+	friend class Utils;
 	friend class RegexParser;
 };
 

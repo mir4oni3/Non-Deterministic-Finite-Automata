@@ -8,7 +8,7 @@
 
 NFA RegexParser::NFAfromRegex(const MyString& regex) {
 	for (size_t i = 0; i < regex.length(); i++) {
-		if (!isValidRegexSymbol(regex[i])) {
+		if (!Utils::isValidRegexSymbol(regex[i])) {
 			throw std::invalid_argument("Error: invalid regex");
 		}
 	}
@@ -26,7 +26,7 @@ NFA RegexParser::RPNtoNFA(const MyString& RPNregex) {
 	for (size_t i = 1; i < RPNregex.length(); i += 2) {
 		char currentSymbol = RPNregex[i];
 
-		if (isInAlphabet(currentSymbol) || currentSymbol == EPSILON) {
+		if (Utils::isInAlphabet(currentSymbol) || currentSymbol == EPSILON) {
 			stack.push(RegexParser::NFAfromLetter(currentSymbol));
 		}
 
@@ -86,7 +86,7 @@ void RegexParser::regexToRPN(MyString& regex) {
 			}
 		}
 
-		else if (isInAlphabet(currentElement) || currentElement == EPSILON) {
+		else if (Utils::isInAlphabet(currentElement) || currentElement == EPSILON) {
 			queue.enqueue(currentElement);
 		}
 
@@ -127,7 +127,7 @@ void RegexParser::regexToRPN(MyString& regex) {
 		stack.pop();
 	}
 
-	regex = std::move(toString(queue));
+	regex = std::move(Utils::toString(queue));
 }
 
 NFA RegexParser::NFAfromLetter(const char letter) {
@@ -147,7 +147,8 @@ NFA RegexParser::NFAfromLetter(const char letter) {
 }
 
  MyString RegexParser::RegexFromNFA(const NFA& nfa) {
-	 MyVector<size_t> initialIndices;
+	 return nfa.regex;
+	 /*MyVector<size_t> initialIndices;
 	 MyVector<size_t> finalIndices;
 	 for (size_t i = 0; i < nfa.stateCount; i++) {
 		 if (nfa.states[i].isInitial()) {
@@ -164,7 +165,7 @@ NFA RegexParser::NFAfromLetter(const char letter) {
 			 result += calcReg(initialIndices[i], finalIndices[j], nfa.stateCount, nfa) + "+";
 		 }
 	 }
-	 return result;
+	 return result;*/
 }
 
  MyString RegexParser::calcReg(size_t i, size_t j, size_t k, const NFA& nfa) {

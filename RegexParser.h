@@ -4,7 +4,7 @@
 
 struct RegexParser {
 	static NFA NFAfromRegex(const MyString& regex);
-	static MyString RegexFromNFA(const NFA& nfa);
+	static MyString RegexFromNFA(const NFA& nfa); // doesn't work
 private:
 	static void regexToRPN(MyString& regex); // shunting yard algorithm ; RPN -> Reverse Polish Notation
 	static NFA RPNtoNFA(const MyString& RPNregex); //RPN evaluation algorithm
