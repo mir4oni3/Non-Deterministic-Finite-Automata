@@ -1,5 +1,7 @@
 ## Non-Deterministic Finite Automata
-  Object-Oriented Programming course project <br> <br>
+  Object-Oriented Programming course project <br> 
+  The task description can be seen here (in Bulgarian):<br>
+  https://docs.google.com/document/d/1iiWwvC2TSuXLPIgFBKEgPsBghOjBNI29vZ3z7RZTFn4/edit <br> <br>
 ## Functionalities
 - Determinization of NFA <br>
 - Minimization of NFA <br>
