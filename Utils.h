@@ -24,8 +24,6 @@ public:
 
 	static void makeSingleInitialAndFinal(NFA& nfa);
 
-	static MyVector<size_t> getResultStates(const MyVector<size_t>& initial, char ch, const NFA& nfa);
-
 	static void fillTable(MyVector<MyVector<MyVector<size_t>>>& table, const NFA& nfa, size_t row = 0);
 	static void addNewRows(MyVector<MyVector<MyVector<size_t>>>& table,const MyVector<MyVector<size_t>>& row);
 	static bool areEqual(const MyVector<size_t>& v1,const MyVector<size_t>& v2);
@@ -35,4 +33,7 @@ public:
 	static void printTable(const MyVector<MyVector<MyVector<size_t>>>& table);
 
 	static void reverseNFA(NFA& nfa);
+
+	static void serializeState(std::ostream& os, const State& state);
+	static State readState(std::istream& is);
 };

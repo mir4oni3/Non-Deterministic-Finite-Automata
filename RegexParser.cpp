@@ -36,7 +36,7 @@ NFA RegexParser::RPNtoNFA(const MyString& RPNregex) {
 			}
 			NFA current = stack.peek();
 			stack.pop();
-			Star(current);
+			StarRef(current);
 			stack.push(current);
 		}
 
@@ -48,7 +48,7 @@ NFA RegexParser::RPNtoNFA(const MyString& RPNregex) {
 			stack.pop();
 			NFA second = stack.peek();
 			stack.pop();
-			(currentSymbol == '.') ? Concat(second, first) : Union(second, first);
+			(currentSymbol == '.') ? ConcatRef(second, first) : UnionRef(second, first);
 			stack.push(second);
 		}
 	}
@@ -95,27 +95,17 @@ void RegexParser::regexToRPN(MyString& regex) {
 		}
 
 		else if (currentElement == '.') {
-			if (stack.isEmpty()) {
-				stack.push(currentElement);
-				continue;
-			}
-			char topOfStack = stack.peek();
-			if (topOfStack == '*') {
+			while (!stack.isEmpty() && (stack.peek() == '*' || stack.peek() == '.')) {
+				queue.enqueue(stack.peek());
 				stack.pop();
-				queue.enqueue(topOfStack);
 			}
 			stack.push(currentElement);
 		}
 
 		else if (currentElement == '+') {
-			if (stack.isEmpty()) {
-				stack.push(currentElement);
-				continue;
-			}
-			char topOfStack = stack.peek();
-			if (topOfStack == '*' || topOfStack == '.') {
+			while (!stack.isEmpty() && (stack.peek() == '*' || stack.peek() == '.' || stack.peek() == '+')) {
+				queue.enqueue(stack.peek());
 				stack.pop();
-				queue.enqueue(topOfStack);
 			}
 			stack.push(currentElement);
 		}

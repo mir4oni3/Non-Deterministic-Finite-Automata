@@ -131,7 +131,6 @@ void  Utils::addEpsilonTransitionStates(MyVector<size_t>& indices, const NFA& nf
 	}
 }
 
-// ? addEpsilonTransitionStates should be called inside loop ??
 void  Utils::deltaTransition(MyVector<size_t>& indices, char ch, const NFA& nfa) {
 	addEpsilonTransitionStates(indices, nfa);
 	//adds all states to the end of indices that are reached by states in indices with the letter ch with one step (doesn't add epsilon transitions)
@@ -159,6 +158,7 @@ void  Utils::deltaTransition(MyVector<size_t>& indices, char ch, const NFA& nfa)
 	addEpsilonTransitionStates(indices, nfa); // adds recursively all states that are reached with epsilon from states in indices
 }
 
+//after this function, state[stateCount - 1] will be the only final and state[stateCount - 2] will be the only initial
  void Utils::makeSingleInitialAndFinal(NFA& nfa) {
 	 nfa.addState(State(true, false, 0)); // single initial state
 	 nfa.addState(State(false, true, 0)); // single final state
@@ -177,14 +177,6 @@ void  Utils::deltaTransition(MyVector<size_t>& indices, char ch, const NFA& nfa)
 		 }
 	 }
 }
-
- //state[stateCount - 1] is final and state[stateCount - 2] is initial
- MyVector<size_t> Utils::getResultStates(const MyVector<size_t>& initial, char ch, const NFA& nfa) {
-	 MyVector<size_t> result = initial;
-	 Utils::deltaTransition(result, ch, nfa);
-	 
- }
-
 
  //	the transition table looks like this:
  // 
@@ -336,4 +328,22 @@ void  Utils::deltaTransition(MyVector<size_t>& indices, char ch, const NFA& nfa)
 		 }
 		 std::cout << std::endl;
 	 }
+ }
+
+ void Utils::serializeState(std::ostream& os, const State& state) {
+	 bool isInitial = state.isInitial();
+	 bool isFinal = state.isFinal();
+	 unsigned name = state.getName();
+	 os.write((const char*)&isInitial, sizeof(isInitial));
+	 os.write((const char*)&isFinal, sizeof(isFinal));
+	 os.write((const char*)&name, sizeof(name));
+ }
+
+ State Utils::readState(std::istream& is) {
+	 bool isInitial, isFinal;
+	 unsigned name;
+	 is.read((char*)&isInitial, sizeof(isInitial));
+	 is.read((char*)&isFinal, sizeof(isFinal));
+	 is.read((char*)&name, sizeof(name));
+	 return State(isInitial, isFinal, name);
  }

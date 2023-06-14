@@ -3,7 +3,7 @@
 class State {
 	bool initial = false;
 	bool final = false;
-	unsigned name = 0; //necessary label so that transitions differentiate different states in the NFA
+	unsigned name = 0; //necessary label so that transitions differentiate between states in the NFA
 public:
 	bool isInitial() const;
 	bool isFinal() const;

@@ -4,6 +4,7 @@
 #include "Utils.h"
 #include <cstring>
 #include <iostream>
+#include <fstream>
 
 void NFA::resizeStates() {
 	State* newStates = new State[2 * stateCapacity];
@@ -64,6 +65,8 @@ void NFA::free() {
 	delete[] transitions;
 	transitions = nullptr;
 	states = nullptr;
+	stateCount = stateCapacity = 0;
+	transitionCount = transitionCapacity = 0;
 }
 
 NFA::NFA() {
@@ -226,6 +229,87 @@ void NFA::print() const {
 	std::cout << "This NFA is" << (isDFA ? "" : " not") << " a DFA";
 }
 
+//we save all the fields of nfa instead of only the regex, because 
+//when we read the nfa, we don't want to run the regex->nfa algorithm again
+void NFA::serialize(const MyString& filename) {
+	std::ofstream ofs(filename.c_str(), std::ios::binary | std::ios::out);
+	if (!ofs.is_open()) {
+		throw std::exception("Couldn't open file");
+	}
+	//write states
+	ofs.write((const char*)&stateCapacity, sizeof(stateCapacity));
+	ofs.write((const char*)&stateCount, sizeof(stateCount));
+	for (size_t i = 0; i < stateCount; i++) {
+		Utils::serializeState(ofs, states[i]);
+	}
+
+	//write transitions
+	ofs.write((const char*)&transitionCapacity, sizeof(transitionCapacity));
+	ofs.write((const char*)&transitionCount, sizeof(transitionCount));
+	for (size_t i = 0; i < transitionCount; i++) {
+		Utils::serializeState(ofs, transitions[i].getInitialState());
+		Utils::serializeState(ofs, transitions[i].getResultState());
+		char transitionValue = transitions[i].getTransitionValue();
+		ofs.write((const char*)&transitionValue, sizeof(transitionValue));
+	}
+
+	//write regex
+	size_t regexLength = regex.length();
+	ofs.write((const char*)&regexLength, sizeof(regexLength));
+	ofs.write(regex.c_str(), regexLength);
+
+	//write isDFA
+	ofs.write((const char*)&isDFA, sizeof(isDFA));
+
+	ofs.close();
+}
+
+//we save all the fields of nfa instead of only the regex, because 
+//when we read the nfa, we don't want to run the regex->nfa algorithm again
+void NFA::deserialize(const MyString& filename) {
+	std::ifstream ifs(filename.c_str(), std::ios::binary | std::ios::in);
+	if (!ifs.is_open()) {
+		throw std::exception("Couldn't open file");
+	}
+	free();//clear previous automata data
+
+	//read states
+	ifs.read((char*)&stateCapacity, sizeof(stateCapacity));
+	states = new State[stateCapacity];
+	size_t tempStateCount = 0;
+	ifs.read((char*)&tempStateCount, sizeof(tempStateCount));
+	for (size_t i = 0; i < tempStateCount; i++) {
+		addState(Utils::readState(ifs)); //increments stateCount, after loop stateCount will be set
+	}
+
+	//read transitions
+	ifs.read((char*)&transitionCapacity, sizeof(transitionCapacity));
+	transitions = new Transition[transitionCapacity];
+	size_t tempTransitionCount = 0;
+	ifs.read((char*)&tempTransitionCount, sizeof(tempTransitionCount));
+	for (size_t i = 0; i < tempTransitionCount; i++) {
+		State initial = Utils::readState(ifs);
+		State result = Utils::readState(ifs);
+		char transitionValue;
+		ifs.read((char*)&transitionValue, sizeof(transitionValue));
+		addTransition(Transition(initial, result, transitionValue)); //increments transitionCount, after loop transitionCount will be set
+	}
+
+	//read regex
+	size_t regexLength;
+	ifs.read((char*)&regexLength, sizeof(regexLength));
+	char* regex = new char[regexLength + 1];
+	ifs.read(regex, regexLength);
+	regex[regexLength] = '\0';
+	this->regex = MyString(regex);
+	delete[] regex;
+
+	//read isDFA
+	ifs.read((char*)&isDFA, sizeof(isDFA));
+
+	ifs.close();
+}
+
 bool NFA::isEmptyLanguage() const {
 	//fill visitedStates with initialStates
 	MyVector<size_t> visitedStates;
@@ -235,9 +319,9 @@ bool NFA::isEmptyLanguage() const {
 		}
 	}
 
-	//for every state, add all states reachable from it (visitedStates.getSize() will increase with time)
+	//for every state, add all states reachable from it
 	//after this loop, visitedStates will be filled with all reachable states
-	for (size_t i = 0; i < visitedStates.getSize(); i++) {
+	for (size_t i = 0; i < visitedStates.getSize(); i++) { //  visitedStates.getSize() will increase over time
 		for (size_t j = 0; j < transitionCount; j++) {
 			if (Utils::indexByName(transitions[j].getInitialState().getName(), *this) == visitedStates[i]) {
 				if (!Utils::isInAlphabet(transitions[j].getTransitionValue())) { //we want to only check for the given alphabet(inside Constants.h)
@@ -276,7 +360,7 @@ bool NFA::accept(const MyString& word) const {
 	Utils::addEpsilonTransitionStates(indices, *this);
 	//indices is now filled with all starting states(and those that are reachable from the starting states with epsilon transitions)
 
-	//performs epsilon transition for every letter in the word and keeps the current states in indices after each step
+	//perform epsilon transition for every letter in the word and keep the current states in indices after each step
 	for (size_t i = 0; i < word.length(); i++) {
 		if (indices.getSize() == 0) {
 			return false;
@@ -293,12 +377,59 @@ bool NFA::accept(const MyString& word) const {
 	return false;
 }
 
-void Union(NFA& lhs, const NFA& rhs) { 
+NFA Union(const NFA& lhs, const NFA& rhs) {
+	NFA lhsCopy = lhs;
+	UnionRef(lhsCopy, rhs);
+	return lhsCopy;
+}
+
+NFA Concat(const NFA& lhs, const NFA& rhs) {
+	NFA lhsCopy = lhs;
+	ConcatRef(lhsCopy, rhs);
+	return lhsCopy;
+}
+
+NFA Star(const NFA& nfa) {
+	NFA copy = nfa;
+	StarRef(copy);
+	return copy;
+}
+
+NFA Complement(const NFA& nfa) {
+	NFA nfaCopy(nfa);
+	nfaCopy.minimise();
+	for (size_t i = 0; i < nfaCopy.stateCount; i++) {
+		nfaCopy.states[i] = State(nfaCopy.states[i].isInitial(), !nfaCopy.states[i].isFinal(), nfaCopy.states[i].getName());
+	}
+
+	nfaCopy.regex = RegexParser::RegexFromNFA(nfaCopy);
+	return nfaCopy;
+}
+
+//Using DeMorgan's law,   lhs^rhs = !(!lhs U !rhs)
+NFA Intersection(const NFA& lhs, const NFA& rhs) {
+	NFA lhsComplement = Complement(lhs);
+	NFA rhsComplement = Complement(rhs);
+	UnionRef(lhsComplement, rhsComplement);
+	return Complement(lhsComplement);
+}
+
+// L1-L2 = L1^(!L2)
+NFA Difference(const NFA& lhs, const NFA& rhs) {
+	NFA rhsComplement = Complement(rhs);
+	return Intersection(lhs, rhsComplement);
+}
+
+void UnionRef(NFA& lhs, const NFA& rhs) { 
+	MyString lhsRegex = lhs.regex;
 	Utils::addElementsFrom(lhs, rhs);
+	lhs.regex = lhsRegex + "+" + rhs.regex;
 	lhs.isDFA = false;
 }
 
-void Concat(NFA& lhs, const NFA& rhs) {
+void ConcatRef(NFA& lhs, const NFA& rhs) {
+	MyString lhsRegex = lhs.regex;
+
 	//add new intermediate state between the two nfa's
 	lhs.addState();
 	unsigned intermediateStateIndex = lhs.stateCount - 1;
@@ -328,10 +459,11 @@ void Concat(NFA& lhs, const NFA& rhs) {
 		}
 	}
 	lhs.isDFA = false;
+	lhs.regex = lhsRegex + "." + rhs.regex;
 }
 
-void Star(NFA& nfa) {
-	//add new state which is initial and final so that epsilon is added
+void StarRef(NFA& nfa) {
+	//add new state which is initial and final so that epsilon is added to the language
 	nfa.addState(State(true, true, nfa.states[nfa.stateCount - 1].getName() + 1));
 
 	for (size_t i = 0; i < nfa.stateCount; i++) {
@@ -344,5 +476,6 @@ void Star(NFA& nfa) {
 			}
 		}
 	}
+	nfa.regex = "(" + nfa.regex + ")*";
 	nfa.isDFA = false;
 }
