@@ -16,5 +16,6 @@ public:
 
 	Transition() = default;
 	Transition(const State& initial, const State& result, const char letter);
+	Transition(const size_t initialName,const size_t resultName, const char letter);
 	void print() const;
 };

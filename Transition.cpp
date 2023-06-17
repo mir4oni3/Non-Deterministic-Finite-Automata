@@ -27,6 +27,8 @@ void Transition::setTransitionValue(char value) {
 
 Transition::Transition(const State& initial, const State& result, const char letter) : initialState(initial), resultState(result), transitionValue(letter) {}
 
+Transition::Transition(const size_t initialName, const size_t resultName, const char letter) : initialState(0,0,initialName), resultState(0,0,resultName), transitionValue(letter){}
+
 void Transition::print() const {
 	std::cout << "(" << initialState.getName() << ", " << resultState.getName() << ", " << transitionValue << ")" << std::endl;
 }

@@ -56,6 +56,7 @@ public:
 
 	friend class Utils;
 	friend class RegexParser;
+	friend class NFATool;
 };
 
 NFA Union(const NFA& lhs, const NFA& rhs);
