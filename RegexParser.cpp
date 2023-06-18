@@ -183,6 +183,7 @@ NFA RegexParser::NFAfromLetter(const char letter) {
 		 // We could do this
 		 // regex += calcReg(i, j, k - 1, dfa) + "+(" + calcReg(i, k - 1, k - 1, dfa) + ").(" + calcReg(k - 1, k - 1, k - 1, dfa) + ")*.(" + calcReg(k - 1, j, k - 1, dfa) + ")";
 		 // instead, but the regex will be filled with useless brackets and becomes very long and unreadable
+
 		 MyString firstPart = calcReg(i, j, k - 1, dfa);
 		 MyString secondPart = calcReg(i, k - 1, k - 1, dfa);
 		 MyString thirdPart = calcReg(k - 1, k - 1, k - 1, dfa);
@@ -238,6 +239,5 @@ NFA RegexParser::NFAfromLetter(const char letter) {
 			 regex += "(" + fourthPart + ")";
 		 }
 	 }
-
 	 return regex;
  }
