@@ -1,6 +1,8 @@
 #include "NFATool.h"
 #include "Utils.h"
 
+MyVector<NFA> NFATool::automatas; // static member variable must be instantiated
+
 void NFATool::run() {
 	int key = 0;
 	while (key != 1) {
@@ -114,7 +116,7 @@ void NFATool::select() {
 	do {
 		std::cout << "please select an option:" << std::endl;
 		std::cin >> key;
-	} while (key < 1 || key > 10);
+	} while (key < 1 || key > 11);
 	std::cout << std::endl;
 
 	switch (key) {
@@ -205,8 +207,9 @@ void NFATool::remove() {
 	do {
 		std::cout << "Enter index: (-1 to go back)" << std::endl;
 		std::cin >> index;
-	} while (index < -1 || index >= automatas.getSize());
-	
+	} while (index < -1 || index + 1 >= automatas.getSize() + 1);
+	std::cout << std::endl;
+
 	if (index == -1) {
 		return;
 	}
@@ -222,7 +225,7 @@ void NFATool::kleeneStar() {
 	do {
 		std::cout << "Enter index: (-1 to go back)" << std::endl;
 		std::cin >> index;
-	} while (index < -1 || index >= automatas.getSize());
+	} while (index < -1 || index + 1 >= automatas.getSize() + 1);
 
 	if (index == -1) {
 		return;
@@ -248,7 +251,7 @@ void NFATool::complement() {
 	do {
 		std::cout << "Enter index: (-1 to go back)" << std::endl;
 		std::cin >> index;
-	} while (index < -1 || index >= automatas.getSize());
+	} while (index < -1 || index + 1 >= automatas.getSize() + 1);
 
 	if (index == -1) {
 		return;
@@ -354,7 +357,7 @@ int NFATool::getFirstIndex() {
 	do {
 		std::cout << "Enter first index: (-1 to go back)" << std::endl;
 		std::cin >> index;
-	} while (index < -1 || index >= automatas.getSize());
+	} while (index < -1 || index + 1 >= automatas.getSize() + 1);
 	return index;
 }
 

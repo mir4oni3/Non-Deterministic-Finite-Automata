@@ -2,22 +2,26 @@
 #include "NFA.h"
 
 class NFATool {
-	 MyVector<NFA> automatas;
+	static MyVector<NFA> automatas;
 public:
-	 void run();
+	static void run();
 private:
-	bool isValidKey(int key);
-	void add();
-	void select();
-	void remove();
-	void kleeneStar();
-	void complement();
-	void intersect();
-	void difference();
-	void unite();
-	void concatenation();
+	static bool isValidKey(int key);
+	static void add();
+	static void select();
+	static void remove();
+	static void kleeneStar();
+	static void complement();
+	static void intersect();
+	static void difference();
+	static void unite();
+	static void concatenation();
 
-	int getFirstIndex();
-	int getSecondIndex();
-	int getChoice();
+	static int getFirstIndex();
+	static int getSecondIndex();
+	static int getChoice();
+
+	NFATool() = default; // this class is uninstantiable since the default constructor is private
+	NFATool(const NFATool&) = delete;
+	NFATool& operator=(const NFATool&) = delete;
 };

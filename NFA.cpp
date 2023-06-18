@@ -459,7 +459,7 @@ void ConcatRef(NFA& lhs, const NFA& rhs) {
 		}
 	}
 	lhs.isDFA = false;
-	lhs.regex = lhsRegex + "." + rhs.regex;
+	lhs.regex = "(" + lhsRegex + ").(" + rhs.regex + ")";
 }
 
 void StarRef(NFA& nfa) {
