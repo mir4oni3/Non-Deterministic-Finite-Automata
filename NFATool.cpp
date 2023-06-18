@@ -62,12 +62,13 @@ bool NFATool::isValidKey(int key) {
 void NFATool::add() {
 	std::cout << "1. Add by regex" << std::endl;
 	std::cout << "2. Add empty NFA" << std::endl;
-	std::cout << "3. Go back" << std::endl;
+	std::cout << "3. Add from file" << std::endl;
+	std::cout << "4. Go back" << std::endl;
 
 	int choice = 0;
 	do {
 		std::cin >> choice;
-	} while (choice != 1 && choice != 2 && choice != 3);
+	} while (choice < 1 || choice > 4);
 
 	if (choice == 1) {
 		std::cout << "Enter regex:" << std::endl;
@@ -86,6 +87,21 @@ void NFATool::add() {
 	else if (choice == 2) {
 		automatas.push_back(NFA());
 	}
+	else if (choice == 3) {
+		std::cout << "Please enter file name:" << std::endl;
+		MyString filename;
+		std::cin >> filename;
+		NFA nfa;
+		try {
+			nfa.deserialize(filename);
+		}
+		catch (const std::exception& e) {
+			std::cout << e.what() << std::endl << std::endl;
+			return;
+		}
+		automatas.push_back(nfa);
+
+	}
 	std::cout << std::endl << std::endl;
 }
 
@@ -100,6 +116,7 @@ void NFATool::select() {
 	std::cout << std::endl;
 
 	int key = 0;
+	std::cout << "Currently viewing NFA at index " << index << std::endl;
 	std::cout << "1. Minimise the NFA" << std::endl;
 	std::cout << "2. Determinate the NFA" << std::endl;
 	std::cout << "3. Make the NFA total" << std::endl;
