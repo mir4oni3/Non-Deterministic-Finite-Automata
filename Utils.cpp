@@ -310,7 +310,6 @@ void  Utils::deltaTransition(MyVector<size_t>& indices, char ch, const NFA& nfa)
 	 }
 
 	 nfa.isDFA = false;
-	 nfa.regex = RegexParser::RegexFromNFA(nfa);
  }
 
  void Utils::printTable(const MyVector<MyVector<MyVector<size_t>>>& table) {

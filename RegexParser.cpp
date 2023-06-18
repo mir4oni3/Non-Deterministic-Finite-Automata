@@ -136,6 +136,108 @@ NFA RegexParser::NFAfromLetter(const char letter) {
 	return result;
 }
 
+//using kleene's first theorem
  MyString RegexParser::RegexFromNFA(const NFA& nfa) {
-	 return nfa.regex;
+	 NFA nfaCopy(nfa);
+	 nfaCopy.minimise();
+	 MyString regex;
+
+	 for (size_t i = 0; i < nfaCopy.stateCount; i++) {
+		 if (nfaCopy.states[i].isFinal()) {
+			 if (regex.length() != 0) {
+				 regex += "+";
+			 }
+			 regex += calcReg(0, i, nfaCopy.stateCount, nfaCopy);
+		 }
+	 }
+
+	 return regex;
 }
+
+ //using kleene's first theorem
+ MyString RegexParser::calcReg(size_t i, size_t j, size_t k, const NFA& dfa) {
+	 MyString regex;
+
+	 //recursion base
+	 if (k == 0) {
+		 for (size_t ind = 0; ind < dfa.transitionCount; ind++) {
+			 if (dfa.transitions[ind].getInitialState().getName() == i && dfa.transitions[ind].getResultState().getName() == j) {
+				 if (regex.length() != 0) {
+					 regex += "+";
+				 }
+				 MyString chStr = "E";
+				 chStr[0] = dfa.transitions[ind].getTransitionValue();
+				 regex += chStr;
+			 }
+		 }
+		 if (i == j) {
+			 if (regex.length() != 0) {
+				 regex += "+";
+			 }
+			 MyString epsilon = "E";
+			 epsilon[0] = EPSILON;
+			 regex += epsilon;
+		 }
+	 }
+	 else {
+		 // We could do this
+		 // regex += calcReg(i, j, k - 1, dfa) + "+(" + calcReg(i, k - 1, k - 1, dfa) + ").(" + calcReg(k - 1, k - 1, k - 1, dfa) + ")*.(" + calcReg(k - 1, j, k - 1, dfa) + ")";
+		 // instead, but the regex will be filled with useless brackets and becomes very long and unreadable
+		 MyString firstPart = calcReg(i, j, k - 1, dfa);
+		 MyString secondPart = calcReg(i, k - 1, k - 1, dfa);
+		 MyString thirdPart = calcReg(k - 1, k - 1, k - 1, dfa);
+		 MyString fourthPart = calcReg(k - 1, j, k - 1, dfa);
+
+		 size_t firstLen = firstPart.length();
+		 size_t secondLen = secondPart.length();
+		 size_t thirdLen = thirdPart.length();
+		 size_t fourthLen = fourthPart.length();
+
+		 regex += firstPart;
+		 if (firstLen > 0 && secondLen > 0 && fourthLen > 0) {
+			 regex += "+";
+		 }
+		 else {
+			 return regex;
+		 }
+
+		 if (secondLen > 0) {
+			 if (thirdLen > 0 || fourthLen > 0) {
+				 if (!(secondLen == 1 && secondPart[0] == EPSILON)) {
+					 regex += "(" + secondPart + ")";
+				 }
+			 }
+			 else {
+				 regex += secondPart;
+			 }
+		 }
+		 if (secondLen > 0 && (thirdLen > 0 || fourthLen > 0) && secondPart[0] != EPSILON) {
+			 regex += ".";
+		 }
+		 if (thirdLen > 0) {
+			 if (thirdLen == 1) {
+				 if (thirdPart[0] != EPSILON) {
+					 regex += thirdPart + "*";
+				 }
+				 else if (!(secondLen > 0 || fourthLen > 0)) {
+					 regex += thirdPart;
+				 }
+			 }
+			 else {
+				 regex += "(" + thirdPart + ")*";
+			 }
+		 }
+		 if ((thirdLen > 1 || (thirdLen == 1 && thirdPart[0] != EPSILON)) && fourthLen > 0) {
+			 regex += ".";
+		 }
+
+		 if (fourthLen == 1) {
+			 regex += fourthPart;
+		 }
+		 else if (fourthLen > 1){
+			 regex += "(" + fourthPart + ")";
+		 }
+	 }
+
+	 return regex;
+ }

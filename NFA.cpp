@@ -213,7 +213,6 @@ void NFA::addTransition(const Transition& other) {
 	transitionCount++;
 
 	isDFA = false;
-	this->regex = RegexParser::RegexFromNFA(*this);
 }
 
 void NFA::print() const {

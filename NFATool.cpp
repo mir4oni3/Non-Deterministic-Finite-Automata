@@ -1,5 +1,6 @@
 #include "NFATool.h"
 #include "Utils.h"
+#include "RegexParser.h"
 
 MyVector<NFA> NFATool::automatas; // static member variable must be instantiated
 
@@ -114,29 +115,30 @@ void NFATool::select() {
 		return;
 	}
 	std::cout << std::endl;
-
 	int key = 0;
-	std::cout << "Currently viewing NFA at index " << index << std::endl;
-	std::cout << "1. Minimise the NFA" << std::endl;
-	std::cout << "2. Determinate the NFA" << std::endl;
-	std::cout << "3. Make the NFA total" << std::endl;
-	std::cout << "4. Add a state to the NFA" << std::endl;
-	std::cout << "5. Add a transition to the NFA" << std::endl;
-	std::cout << "6. Serialize the NFA to a file" << std::endl;
-	std::cout << "7. Deserialize the NFA from a file" << std::endl;
-	std::cout << "8. Check if the language of the NFA is the empty language" << std::endl;
-	std::cout << "9. Check if the nfa accepts a word" << std::endl;
-	std::cout << "10. print the NFA" << std::endl;
-	std::cout << "11. Go Back" << std::endl;
 
-	std::cout << std::endl;
 	do {
-		std::cout << "please select an option:" << std::endl;
-		std::cin >> key;
-	} while (key < 1 || key > 11);
-	std::cout << std::endl;
+		std::cout << "Currently viewing NFA at index " << index << std::endl;
+		std::cout << "1. Minimise the NFA" << std::endl;
+		std::cout << "2. Determinate the NFA" << std::endl;
+		std::cout << "3. Make the NFA total" << std::endl;
+		std::cout << "4. Add a state to the NFA" << std::endl;
+		std::cout << "5. Add a transition to the NFA" << std::endl;
+		std::cout << "6. Serialize the NFA to a file" << std::endl;
+		std::cout << "7. Deserialize the NFA from a file" << std::endl;
+		std::cout << "8. Check if the language of the NFA is the empty language" << std::endl;
+		std::cout << "9. Check if the nfa accepts a word" << std::endl;
+		std::cout << "10. print the NFA" << std::endl;
+		std::cout << "11. Go Back" << std::endl;
 
-	switch (key) {
+		std::cout << std::endl;
+		do {
+			std::cout << "please select an option:" << std::endl;
+			std::cin >> key;
+		} while (key < 1 || key > 11);
+		std::cout << std::endl;
+
+		switch (key) {
 		case 1: automatas[index].minimise(); break;
 		case 2: automatas[index].determinate(); break;
 		case 3: automatas[index].makeTotal(); break;
@@ -170,6 +172,7 @@ void NFATool::select() {
 			if (!(from >= automatas[index].stateCount || to >= automatas[index].stateCount || !Utils::isInAlphabet(ch))) {
 				automatas[index].addTransition(Transition(from, to, ch));
 			}
+			automatas[index].regex = RegexParser::RegexFromNFA(automatas[index]);
 			break;
 		}
 
@@ -211,12 +214,13 @@ void NFATool::select() {
 			std::cout << (automatas[index].accept(word) ? "Yes, the NFA accepts the word" : "No, the NFA doesn't accept the word") << std::endl;
 			break;
 		}
-		case 10: 
-			automatas[index].print(); 
+		case 10:
+			automatas[index].print();
 			std::cout << std::endl;
 			break;
-	}
-	std::cout << std::endl;
+		}
+		std::cout << std::endl;
+	} while (key != 11);
 }
 
 void NFATool::remove() {
